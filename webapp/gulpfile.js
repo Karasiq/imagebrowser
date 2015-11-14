@@ -1,5 +1,3 @@
-"use strict";
-
 var gulp = require('gulp'),
     bower = require('gulp-bower'),
     usemin = require('gulp-usemin'),
@@ -14,6 +12,9 @@ var gulp = require('gulp'),
 var outputDir = '../src/main/resources/webstatic/';
 
 gulp.task('copy', ['bower'], function () {
+    gulp.src('./assets/favicon.ico')
+        .pipe(gulp.dest(outputDir));
+
     gulp.src('./assets/bower/angular-utils-pagination/dirPagination.tpl.html')
         .pipe(gulp.dest(outputDir + 'directives/pagination/'));
 

@@ -1,29 +1,70 @@
-function initImageBrowser() {
+(function() {
     "use strict";
     var App = angular.module('imageBrowser', ['angularUtils.directives.dirPagination']);
 
-    App.factory('galleryService', function () {
-        var images = [];
-        return {
-            getImages: function () {
-                return images;
-            },
-            setImages: function (data) {
-                images = data;
-            }
-        };
-    });
-
-    App.controller('dirCtrl', ['$scope', '$log', '$location', '$http', 'galleryService', '$rootScope', function ($scope, $log, $location, $http, galleryService, $rootScope) {
+    App.controller('imageBrowserCtrl', ['$scope', '$log', '$location', '$http', '$rootScope', function ($scope, $log, $location, $http, $rootScope) {
+        // Model
         $scope.directories = [];
+
+        $scope.images = [];
 
         $scope.currentDirectory = "";
 
-        $scope.renderDirectoryLink = function (dir) {
-            function strStartsWith(str, prefix) { // String.startsWith
-                return str.indexOf(prefix) === 0;
+        $scope.pagination = {
+            directories: 1,
+            images: 1
+        };
+
+
+        /**
+         * Returns [tree (string array), path separator (string)] or undefined
+         * @param dir Directory full path
+         * @returns {Array, undefined}
+         */
+        function parsePathTree(dir) {
+            var tree, separator;
+            if (dir.indexOf("\\") > -1) { // Windows
+                tree = dir.split("\\");
+                separator = "\\";
+            } else if (dir.indexOf("/") > -1) { // Linux
+                tree = dir.split("/");
+                separator = "/";
             }
 
+            if (tree && separator) {
+                return [tree, separator];
+            } else {
+                return undefined;
+            }
+        }
+
+        function strStartsWith(str, prefix) { // String.startsWith
+            return str.indexOf(prefix) === 0;
+        }
+
+        function getPageTitle(directory) {
+            var baseTitle = "ImageBrowser";
+            var tree = parsePathTree(directory);
+            if (tree) {
+                var dirTitle;
+                var dirTitleSize = 3;
+                if (tree[0].length > dirTitleSize) {
+                    // "/1/2/3/4/5" -> ".../3/4/5"
+                    dirTitle = "..." + tree[1] + tree[0].slice(Math.max(tree[0].length - dirTitleSize, 0)).reduce(function (result, node) {
+                            return result + tree[1] + node;
+                        });
+                } else {
+                    dirTitle = directory; // As is
+                }
+
+                return baseTitle + " - " + dirTitle;
+            } else {
+                return baseTitle;
+            }
+        }
+
+        // Public functions
+        $scope.renderDirectoryLink = function (dir) {
             if (!$scope.isAtRoot() && strStartsWith(dir, $scope.currentDirectory)) {
                 return dir.slice($scope.currentDirectory.length + 1);
             } else {
@@ -58,7 +99,9 @@ function initImageBrowser() {
             $http({
                 method: 'DELETE',
                 url: 'directory',
-                params: {path: dir}
+                params: {
+                    path: dir
+                }
             }).success(function () {
                 $log.debug("Root directory deleted: " + dir);
                 $scope.directories.splice($scope.directories.indexOf(dir), 1);
@@ -70,17 +113,19 @@ function initImageBrowser() {
                 $log.debug("Directory loaded: " + data.path + " (" + data.subDirs.length + "/" + data.images.length + " entries)");
                 $scope.currentDirectory = data.path;
                 $scope.directories = data.subDirs;
-                galleryService.setImages(data.images);
+                $scope.images = data.images;
+                document.title = getPageTitle(data.path);
             }
 
             function showRoot(data) {
                 $log.debug("Root loaded (" + data.length + " entries)");
                 $scope.currentDirectory = "";
                 $scope.directories = data;
-                galleryService.setImages([]);
+                $scope.images = [];
+                document.title = getPageTitle("");
             }
 
-            if (dir) {
+            if (dir !== undefined && dir.length > 0) {
                 $http({
                     url: 'directory',
                     method: 'GET',
@@ -100,38 +145,63 @@ function initImageBrowser() {
         };
 
         $scope.setCurrentDirectory = function (dir) {
-            $location.search("path", dir);
+            if ($location.search().path !== dir) {
+                $location.search("path", dir);
+                $scope.pagination.directories = 1;
+                $scope.pagination.images = 1;
+            }
         };
 
         $scope.loadRootLevel = function () {
             $scope.setCurrentDirectory("");
         };
 
+        $scope.getDirectoryName = function (dir) {
+            var tree = parsePathTree(dir);
+            if (tree) {
+                return tree[0].pop(); // Last element
+            }
+        };
+
+        $scope.getUpperLevel = function (dir) {
+            var tree = parsePathTree(dir);
+            if (tree) {
+                tree[0].pop(); // Remove last element
+                return tree[0].reduce(function (result, node) {
+                    return result + tree[1] + node;
+                });
+            } else {
+                return "";
+            }
+        };
+
         $scope.loadUpperLevel = function () {
             if (!$scope.isAtRoot()) {
-                $scope.setCurrentDirectory($scope.currentDirectory + "/..");
+                var upper = $scope.getUpperLevel($scope.currentDirectory);
+                $scope.setCurrentDirectory(upper);
             } else {
                 $scope.loadRootLevel();
             }
         };
 
         $scope.updateLocation = function () {
-            $scope.loadDirectory($location.search());
+            var params = $location.search();
+
+            var dir = params.path;
+            if (dir !== $scope.currentDirectory) {
+                $log.debug("Changing directory to " + dir);
+                $scope.loadDirectory(dir);
+            }
+
+            function readPage(param) {
+                var int = parseInt(param);
+                return isNaN(int) ? 1 : int;
+            }
+            $scope.pagination.directories = readPage(params.dirs_page);
+            $scope.pagination.images = readPage(params.images_page);
         };
 
-        $scope.loadDirectory($location.search().path);
-
-        $scope.updateLocation();
-        $rootScope.$on('$locationChangeSuccess', function() {
-            $scope.updateLocation();
-        });
-    }]);
-
-    App.controller('galleryCtrl', ['$scope', 'galleryService', function ($scope, galleryService) {
-        $scope.images = function () {
-            return galleryService.getImages();
-        };
-
+        // Gallery functions
         $scope.imageTitle = function (image) {
             var title = "Last modified: " + image.lastModified;
             if (image.iptc) {
@@ -147,8 +217,19 @@ function initImageBrowser() {
         $scope.imageThumbnail = function (image) {
             return "/thumbnail?path=" + encodeURIComponent(image);
         };
-    }]);
-}
 
-// Initialize application
-initImageBrowser();
+        // Events
+        $scope.updateLocation();
+        $rootScope.$on('$locationChangeSuccess', function () {
+            $scope.updateLocation();
+        });
+
+        $scope.$watch('pagination.directories', function(page) {
+            $location.search("dirs_page", page > 1 ? page.toString() : undefined);
+        });
+
+        $scope.$watch('pagination.images', function(page) {
+            $location.search("images_page", page > 1 ? page.toString() : undefined);
+        });
+    }]);
+})();

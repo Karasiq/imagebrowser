@@ -8,9 +8,9 @@ html(ng-app='imageBrowser')
         title ImageBrowser
         include _static_includes
 
-    body: .container#main-container
-        .row#directory-panel(ng-controller='dirCtrl'): .col-md-12
+    body: .container#main-container(ng-controller='imageBrowserCtrl')
+        .row#directory-panel: .col-md-12
             include index/directory_panel
 
-        .row#gallery-panel(ng-controller='galleryCtrl', ng-show='images().length > 0'): .col-md-12
+        .row#gallery-panel(ng-show='images.length > 0'): .col-md-12
             include index/gallery_panel

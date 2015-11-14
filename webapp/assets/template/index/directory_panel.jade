@@ -6,13 +6,14 @@
     .form-group: input.form-control(ng-model='directorySearch')
 
     // Pages
-    #folder-pagination(style='text-align:center;'): dir-pagination-controls(pagination-id='directory')
+    #folder-pagination(style='text-align:center;')
+        dir-pagination-controls(pagination-id='directory')
 
     +table('directory-list', 'Path')(class='table-hover table-condensed table-bordered')
         tr(ng-show='isAtRoot()'): td
             +form('add-root-directory')(class='form-inline', attributes={'ng-submit' : 'addRootDirectory()'})
                 +form-input('', 'path')(class='input-sm', attributes={'ng-model' : 'newRootDirectory.path', 'required' : true})
-                input(type='checkbox', title='Read metadata from scanned images', ng-model='newRootDirectory.readMetadata')
+                input(type='checkbox', title='Read metadata from scanned images (slow)', ng-model='newRootDirectory.readMetadata')
                 +form-submit-button('Add')
 
         // Root level button
@@ -21,10 +22,10 @@
 
         // Level up button
         tr(ng-show='!isAtRoot()'): td
-            a(ng-click='loadUpperLevel();$event.preventDefault();', href='##{{currentDirectory}}/..') (level up)
+            a(ng-click='loadUpperLevel();$event.preventDefault();', href='#?path={{getUpperLevel(currentDirectory)}}') (level up)
 
         // Directory links
-        tr(dir-paginate="directory in directories | filter:directorySearch | itemsPerPage:50: 'directory'", pagination-id='directory'): td
+        tr(dir-paginate="directory in directories | filter:directorySearch | itemsPerPage:50: 'directory'", pagination-id='directory', current-page='pagination.directories'): td
             // Delete icon
             a(href="", ng-if='isAtRoot()', ng-click='deleteRootDirectory(directory)')
                 +glyphicon('remove')

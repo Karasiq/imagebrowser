@@ -155,11 +155,13 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
           .subMap(Array(asString(directory)), Array(asString(directory), null))
 
         subTree.foreach {
-          case StoredIndexEntry(path, entry) if !path.exists ⇒
-            if (entry.isDirectory)
-              removeDirectory(path)
-            else
-              removeImage(path)
+          case StoredIndexEntry(path, entry) ⇒
+            if (!path.exists) {
+              if (entry.isDirectory)
+                removeDirectory(path)
+              else
+                removeImage(path)
+            }
         }
 
         // Put images
