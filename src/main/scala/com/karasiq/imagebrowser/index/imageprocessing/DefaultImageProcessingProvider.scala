@@ -1,0 +1,3 @@
+package com.karasiq.imagebrowser.index.imageprocessing
+
+trait DefaultImageProcessingProvider extends DefaultThumbnailCreatorProvider with DefaultMetadataReaderProvider

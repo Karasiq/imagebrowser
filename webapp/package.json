@@ -1,0 +1,14 @@
+{"devDependencies": {
+    "gulp": "latest",
+    "jade": "latest",
+    "bower": "latest",
+    "gulp-bower": "latest",
+    "gulp-jade": "latest",
+    "gulp-csso": "latest",
+    "gulp-imagemin": "latest",
+    "gulp-uglify": "latest",
+    "gulp-usemin": "latest",
+    "gulp-connect": "latest"
+},"scripts": {
+    "test": "gulp test"
+}}

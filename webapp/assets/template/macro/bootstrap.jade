@@ -1,0 +1,128 @@
+include common
+
+mixin glyphicon(name)
+    span(class='glyphicon glyphicon-#{name}')&attributes(attributes.attributes || {})
+
+-var _formInputId = 0
+-var _panelId = 0
+-var _buttonId = 0
+-var _tableId = 0
+
+mixin button(id, caption, style)
+    if id
+        -id_ = id
+    else
+        -id_ = 'button-' + _buttonId
+        -_buttonId = _buttonId + 1
+
+    -style_ = style || 'default'
+    -class_ = attributes.class || ''
+
+    button(id=id_, type='button', class='btn btn-#{style_} #{class_}')&attributes(attributes.attributes || {})= caption
+
+mixin panel(id)
+    -style_ = attributes.style || 'default'
+    if id
+        -id_ = id
+    else
+        -id_ = 'panel-' + _panelId
+        -_panelId = _panelId + 1
+
+    div(id=id_, class='panel panel-#{style_}')&attributes(attributes.attributes || {})
+        if attributes.header
+            if attributes.collapse
+                -attrs_={'data-toggle':'collapse', 'data-target': '#' + id_ + '-body'}
+                -body_class_ = 'collapse in'
+            .panel-heading&attributes(attrs_ || {}): h3.panel-title
+                if attributes.icon
+                    +glyphicon(attributes.icon)
+                    +nbsp
+                    +nbsp
+                =attributes.header
+        .panel-body(id='#{id_}-body', class=body_class_ || '')
+            block
+        if attributes.footer
+            .panel-footer: h3.panel-title
+                if attributes.icon
+                    +glyphicon(attributes.icon)
+                    +nbsp
+                    +nbsp
+                =attributes.footer
+
+mixin table(id, ...columns)
+    -class_ = attributes.class || ''
+    if id
+        -id_ = id
+    else
+        -id_ = 'table-' + _tableId
+        -_tableId = _tableId + 1
+
+    .table-responsive: table(id=id, class='table #{class_}')&attributes(attributes.attributes || {})
+        if attributes.caption
+            caption= attributes.caption
+        thead
+            tr
+                each column in columns
+                    th= column
+        tbody(id='#{id}-tbody')
+            block
+
+mixin form(id)
+    form(id=id, role='form', class=attributes.class)&attributes(attributes.attributes || {})
+        block
+
+mixin form-input(id, name, type)
+    if id
+        -id_ = id
+    else
+        -id_ = 'form-' + _formInputId
+        -_formInputId = _formInputId + 1
+
+    if attributes.state
+        -class_ = 'has-#{attributes.state}'
+    else
+        -class_ = ''
+
+    .form-group(class=class_ + (attributes.group_class || ''))
+        if attributes.label
+            label(for=id_)= attributes.label
+        input(type=type || 'text', name=name, class='form-control ' + (attributes.class || ''), id=id_, placeholder=attributes.placeholder)&attributes(attributes.attributes || {})
+        if attributes.help-block
+            p.help-block= attributes.help-block
+
+mixin form-radio(id, name, label)
+    -class_ = 'radio ' + (attributes.class || '')
+    if attributes.disabled
+        -class_ = class_ + ' disabled'
+        -attributes.attributes.disabled = true
+
+    div(class=class_)
+        label
+            input(type='radio', name=name, id=id, title=attributes.value || '', value=attributes.title || '')&attributes(attributes.attributes || {})
+            +nbsp
+            =label
+
+mixin form-checkbox(id, name, label)
+    -class_ = 'checkbox ' + (attributes.class || '')
+    if attributes.disabled
+        -class_ = class_ + ' disabled'
+        -attributes.attributes.disabled = true
+
+    div(class=class_)
+        label
+            input(type='checkbox', name=name, id=id, value=attributes.value || '', title=attributes.title || '',)&attributes(attributes.attributes || {})
+            +nbsp
+            =label
+
+mixin form-textarea(id, name, rows)
+    textarea.form-control(rows=rows, name=name)
+
+mixin form-select(id, name, ...items)
+    select.form-control(id=id, name=name)&attributes(attributes)
+        each item in items
+            option(value=item.value)= item.caption
+
+mixin form-submit-button(caption, style)
+    -style_ = style || 'default'
+    -class_ = attributes.class || ''
+    button(id=attributes.id, type='submit', class='btn btn-#{style_} #{class_}')= caption

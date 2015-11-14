@@ -1,0 +1,23 @@
+#gallery {
+    margin-right: auto;
+    margin-left: auto;
+    width: 90%;
+}
+
+#gallery img {
+    max-width: 20%;
+}
+
+#main-container {
+    padding: 20px;
+}
+
+@media (min-width: 768px) {
+    #main-container {
+        max-width: 80%;
+    }
+
+    #add-root-directory input[name='path'] {
+        width: 500px;
+    }
+}

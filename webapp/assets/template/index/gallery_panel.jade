@@ -1,0 +1,11 @@
++panel(header='Images', icon='picture', style='success', collapse=true)
+    // Gallery search form
+    .form-group: input.form-control(ng-model='gallerySearch')
+
+    // Gallery pages
+    #gallery-pagination(style='text-align:center;'): dir-pagination-controls(pagination-id='gallery')
+
+    // Gallery images
+    #gallery
+        a(href='{{ imageFull(image.path) }}', target='_blank', dir-paginate="image in images() | filter:gallerySearch | itemsPerPage:24: 'gallery'", pagination-id='gallery', title='{{ imageTitle(image) }}')
+            img(ng-src='{{ imageThumbnail(image.path) }}')
