@@ -1,3 +1,6 @@
 target
 .idea
 src/main/resources/webstatic
+webapp/node_modules/
+webapp/assets/bower/
+webapp/bower_components/
