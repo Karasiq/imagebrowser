@@ -5,6 +5,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 
 import com.karasiq.fileutils.PathUtils._
+import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.FilenameUtils
 
 import scala.collection.GenTraversableOnce
@@ -45,13 +46,18 @@ abstract class DirectoryCursor {
   override def hashCode(): Int = path.hashCode
 }
 
-private object IndexRegistry {
-  val defaultImageExtensions: Set[String] = Set("jpg", "jpeg", "bmp", "png", "gif", "tiff", "svg")
+private[index] object IndexRegistry {
+  // Configured formats
+  val allowedExtensions: Set[String] = {
+    import scala.collection.JavaConversions._
+    val config = ConfigFactory.load().getConfig("imageBrowser")
+    config.getStringList("image-formats").toSet ++ config.getStringList("video-formats").toSet
+  }
 }
 
 abstract class IndexRegistry {
   def needIndexing(file: Path): Boolean = {
-    IndexRegistry.defaultImageExtensions.contains(FilenameUtils.getExtension(file.getFileName.toString))
+    IndexRegistry.allowedExtensions.contains(FilenameUtils.getExtension(file.getFileName.toString))
   }
 
   def images: GenTraversableOnce[ImageCursor]

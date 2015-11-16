@@ -7,6 +7,7 @@ import com.drew.metadata.Metadata
 import com.drew.metadata.iptc.IptcDirectory
 import com.karasiq.imagebrowser.index.ImageMetadata
 import com.karasiq.imagebrowser.providers.MetadataReaderProvider
+import org.apache.commons.io.FilenameUtils
 
 import scala.collection.JavaConversions._
 import scala.util.control.Exception._
@@ -20,10 +21,16 @@ final class DefaultMetadataReader extends MetadataReader {
     data.filter(_.nonEmpty).fold(ImageMetadata.empty)(data ⇒ ImageMetadata(data.toMap))
   }
 
+  private val imageFormats = Set("png", "bmp", "jpg", "jpeg", "gif")
+
   def readMetadata(image: Path): Option[ImageMetadata] = {
-    catching(classOf[ImageProcessingException])
-      .opt(convert(ImageMetadataReader.readMetadata(image.toFile)))
-      .filter(_.metadata.nonEmpty)
+    if (imageFormats.contains(FilenameUtils.getExtension(image.getFileName.toString))) {
+      catching(classOf[ImageProcessingException])
+        .opt(convert(ImageMetadataReader.readMetadata(image.toFile)))
+        .filter(_.metadata.nonEmpty)
+    } else {
+      None
+    }
   }
 }
 

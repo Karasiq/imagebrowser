@@ -80,19 +80,15 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
       thumbnailsCache.getOrCreateThumbnail(img, 150)
     }
   
-    private val fileTree: MapDbTreeMap[Array[Any], IndexEntry] = MapDbWrapper(indexRegistryDb).createTreeMap { db ⇒
-      db.treeMapCreate("files")
+    private val fileTree: MapDbTreeMap[Array[Any], IndexEntry] = MapDbWrapper(indexRegistryDb).createTreeMap("files") { _
         .nodeSize(32)
         .keySerializer(INDEX_KEY)
         .valueSerializer(INDEX_ENTRY)
-        .makeOrGet()
     }
 
-    private val metadata: MapDbHashMap[String, ImageMetadata] = MapDbWrapper(indexRegistryDb).createHashMap { db ⇒
-      db.hashMapCreate("metadata")
+    private val metadata: MapDbHashMap[String, ImageMetadata] = MapDbWrapper(indexRegistryDb).createHashMap("metadata") { _
         .keySerializer(Serializer.STRING_XXHASH)
         .valueSerializer(INDEX_METADATA)
-        .makeOrGet[String, ImageMetadata]()
     }
 
     override def images: GenTraversableOnce[ImageCursor] = fileTree.iterator.collect {
@@ -113,7 +109,7 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
     override def putImage(image: Path, readMetadata: Boolean = false): Unit =  {
       val needRescan = {
         val entry = getImage(image)
-        val changed = !entry.exists(_.lastModified == image.lastModified.toInstant)
+        val changed = !entry.exists(_.lastModified.toEpochMilli == image.lastModified.toMillis)
         // val metadataRescan = readMetadata && entry.exists(_.metadata.isEmpty)
         changed // || metadataRescan
       }
@@ -147,8 +143,8 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
     }
 
     override def putDirectory(directory: Path, readMetadata: Boolean): Unit =  {
-      val time = directory.lastModified.toInstant
-      val changed = !getDirectory(directory).exists(_.lastModified == time) // Directory already scanned with the same last modified time
+      val time = directory.lastModified
+      val changed = !getDirectory(directory).exists(_.lastModified.toEpochMilli == time.toMillis) // Directory already scanned with the same last modified time
       if (changed) {
         // Remove phantom nodes
         val subTree = fileTree.underlying()
@@ -170,7 +166,7 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
         }
 
         // Put directory entry
-        fileTree += asIndexKey(directory) → IndexEntry(true, time)
+        fileTree += asIndexKey(directory) → IndexEntry(true, time.toInstant)
       }
     }
 

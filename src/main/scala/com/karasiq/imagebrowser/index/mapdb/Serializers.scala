@@ -27,13 +27,12 @@ private[mapdb] object Serializers {
   val INDEX_ENTRY = new Serializer[IndexEntry] {
     override def serialize(dataOutput: DataOutput, a: IndexEntry): Unit = {
       dataOutput.writeBoolean(a.isDirectory)
-      DataIO.packLong(dataOutput, a.lastModified.getEpochSecond)
-      DataIO.packInt(dataOutput, a.lastModified.getNano)
+      DataIO.packLong(dataOutput, a.lastModified.toEpochMilli)
     }
 
     override def deserialize(dataInput: DataInput, i: Int): IndexEntry = {
       val directory = dataInput.readBoolean()
-      val lastModified = Instant.ofEpochSecond(DataIO.unpackLong(dataInput), DataIO.unpackInt(dataInput))
+      val lastModified = Instant.ofEpochMilli(DataIO.unpackLong(dataInput))
       IndexEntry(directory, lastModified)
     }
   }

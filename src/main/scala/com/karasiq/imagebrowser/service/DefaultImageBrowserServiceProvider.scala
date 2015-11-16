@@ -17,12 +17,12 @@ import spray.json._
 import spray.httpx.SprayJsonSupport._
 import ImageBrowserJsonProtocol._
 import spray.routing
-import spray.routing.HttpService
+import spray.routing.{Directive1, HttpService}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{postfixOps, reflectiveCalls}
-import scala.util.Success
+import scala.util.{Failure, Try, Success}
 
 trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { self: ActorSystemProvider with IndexRegistryProvider with DirectoryManagerProvider ⇒
   /**
@@ -91,13 +91,13 @@ trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { s
     private def getThumbnailImage(image: String): routing.Route = {
       indexRegistry.getImage(Paths.get(image)) match {
         case Some(img) ⇒
-          Option(img.thumbnail) match {
-            case Some(thumb) ⇒
+          Try(img.thumbnail) match {
+            case Success(thumb) if thumb.ne(null) && thumb.length > 0 ⇒
               respondWithMediaType(MediaTypes.`image/jpeg`) {
                 complete(HttpData(thumb))
               }
 
-            case None ⇒
+            case _ ⇒
               log.warning("Thumbnail not created for: {}", image)
               getFromResource("nothumbnail.png")
           }
@@ -108,8 +108,11 @@ trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { s
       }
     }
 
-    @inline
-    private def normalizePath(path: String) = Paths.get(path).normalize().toAbsolutePath.toString
+    private def absolutePathParameter: Directive1[String] = {
+      parameter("path").map { path ⇒
+        Paths.get(path).normalize().toAbsolutePath.toString
+      }
+    }
 
     // Prohibits modification of tracked directories list
     private val readOnly: Boolean = {
@@ -132,18 +135,18 @@ trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { s
             }
           } ~
           // Directory
-          (path("directory") & parameter("path")) { path ⇒
+          (path("directory") & absolutePathParameter) { path ⇒
             getDirectory(path)
           }
         } ~
         // Thumbnail
-        (path("thumbnail") & parameter("path")) { path ⇒
+        (path("thumbnail") & absolutePathParameter) { path ⇒
           detach(thumbnailContext) {
             getThumbnailImage(path)
           }
         } ~
         // Full image
-        (path("image") & parameter("path")) { path ⇒
+        (path("image") & absolutePathParameter) { path ⇒
           getImage(path)
         } ~
         // Static files
@@ -153,22 +156,21 @@ trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { s
         }
       } ~
       put {
-        (path("directory") & parameters("path", "readMetadata".as[Boolean] ? false)) { (path, readMetadata) ⇒
+        (path("directory") & absolutePathParameter & parameter("readMetadata".as[Boolean] ? false)) { (path, readMetadata) ⇒
           validate(!readOnly, "Directory list modification is disabled") {
             val dir = Paths.get(path)
             if (dir.exists) {
-              dirManagerActor ! ScanDirectory(normalizePath(path), readMetadata)
+              dirManagerActor ! ScanDirectory(path, readMetadata)
               complete(StatusCodes.OK)
             } else complete(StatusCodes.BadRequest, "Directory not exists")
           }
         }
       } ~
       delete {
-        (path("directory") & parameter("path")) { path ⇒
+        (path("directory") & absolutePathParameter) { path ⇒
           validate(!readOnly, "Directory list modification is disabled") {
-            val dir = normalizePath(path)
-            if (directoryManager.trackedDirectories.contains(dir)) {
-              dirManagerActor ! RemoveDirectory(dir)
+            if (directoryManager.trackedDirectories.contains(path)) {
+              dirManagerActor ! RemoveDirectory(path)
               complete(StatusCodes.OK)
             } else complete(StatusCodes.BadRequest, "Invalid directory")
           }

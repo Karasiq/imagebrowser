@@ -10,7 +10,26 @@ scalaVersion := "2.11.7"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-libraryDependencies ++= {
+classpathTypes += "maven-plugin"
+
+// Platform classifier for native library dependencies
+val javacppVersion = "1.1"
+
+val platform = org.bytedeco.javacpp.Loader.getPlatform
+
+// Libraries with native dependencies
+val bytedecoPresetLibs = Seq(
+  "opencv" → s"3.0.0-$javacppVersion",
+  "ffmpeg" → s"2.8.1-$javacppVersion"
+).flatMap {
+  case (lib, ver) ⇒ Seq(
+    // Add both: dependency and its native binaries for the current `platform`
+    "org.bytedeco.javacpp-presets" % lib % ver,
+    "org.bytedeco.javacpp-presets" % lib % ver classifier platform
+  )
+}
+
+libraryDependencies ++= bytedecoPresetLibs ++ {
   val akkaV = "2.3.11"
   val sprayV = "1.3.3"
   Seq(
@@ -26,9 +45,12 @@ libraryDependencies ++= {
     "org.mapdb" % "mapdb" % "2.0-beta8",
     "com.drewnoakes" % "metadata-extractor" % "2.8.1",
     "commons-io" % "commons-io" % "2.4",
-    "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+    "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+    "org.bytedeco" % "javacv" % javacppVersion
   )
 }
+
+autoCompilerPlugins := true
 
 mainClass in Compile := Some("com.karasiq.imagebrowser.app.ImageBrowserBoot")
 
