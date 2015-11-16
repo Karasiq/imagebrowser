@@ -16,7 +16,7 @@ final class JavaCVThumbnailCreator extends ThumbnailCreator {
 
     val jpeg = asJpeg(thumb)
     cvRelease(img)
-    cvRelease(thumb)
+    thumb.release()
     jpeg
   }
 }

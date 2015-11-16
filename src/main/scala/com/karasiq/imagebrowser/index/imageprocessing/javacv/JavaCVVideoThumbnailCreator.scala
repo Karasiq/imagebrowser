@@ -24,7 +24,7 @@ class JavaCVVideoThumbnailCreator extends ThumbnailCreator {
       val converter = new OpenCVFrameConverter.ToIplImage()
       val image = converter.convert(grabber.grabImage())
       val jpeg = JavaCV.asJpeg(image)
-      cvReleaseImage(image)
+      image.release()
       jpeg
     }
   }
