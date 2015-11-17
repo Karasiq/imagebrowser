@@ -18,7 +18,7 @@ object ImageBrowserThumbCache {
         .executorEnable()
         .asyncWriteEnable()
         .asyncWriteFlushDelay(3000)
-        .cacheSoftRefEnable()
+        .cacheWeakRefEnable()
     }
   }
 
