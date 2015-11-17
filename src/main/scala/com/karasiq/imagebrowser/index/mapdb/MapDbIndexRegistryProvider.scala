@@ -26,7 +26,9 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
     // File visitor object
     private final class DirectoryScanner(readMetadata: Boolean) extends SimpleFileVisitor[Path] {
       override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = {
-        putDirectory(dir, readMetadata)
+        if (needRescanDirectory(dir)) {
+          putDirectory(dir, readMetadata)
+        }
         FileVisitResult.CONTINUE
       }
 
@@ -75,6 +77,18 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
       }
     }
 
+    private def needRescanDirectory(dir: Path): Boolean = {
+      val entry = this.getDirectory(dir)
+      !entry.exists(_.lastModified.toEpochMilli == dir.lastModified.toMillis)
+    }
+
+    private def needRescanImage(image: Path): Boolean = {
+      val entry = this.getImage(image)
+      val changed = !entry.exists(_.lastModified.toEpochMilli == image.lastModified.toMillis)
+      // val metadataRescan = readMetadata && entry.exists(_.metadata.isEmpty)
+      changed // || metadataRescan
+    }
+
     @inline
     private def getThumbnail(img: Path): Array[Byte] = {
       thumbnailsCache.getOrCreateThumbnail(img, 150)
@@ -107,14 +121,7 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
     }
 
     override def putImage(image: Path, readMetadata: Boolean = false): Unit =  {
-      val needRescan = {
-        val entry = getImage(image)
-        val changed = !entry.exists(_.lastModified.toEpochMilli == image.lastModified.toMillis)
-        // val metadataRescan = readMetadata && entry.exists(_.metadata.isEmpty)
-        changed // || metadataRescan
-      }
-
-      if (needRescan) {
+      if (needRescanImage(image)) {
         thumbnailsCache.evictThumbnail(image)
 
         // Add file to tree
@@ -143,31 +150,30 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
     }
 
     override def putDirectory(directory: Path, readMetadata: Boolean): Unit =  {
-      val time = directory.lastModified
-      val changed = !getDirectory(directory).exists(_.lastModified.toEpochMilli == time.toMillis) // Directory already scanned with the same last modified time
-      if (changed) {
-        // Remove phantom nodes
-        val subTree = fileTree.underlying()
+      // Remove phantom nodes
+      val subTree = fileTree.underlying()
           .subMap(Array(asString(directory)), Array(asString(directory), null))
 
-        subTree.foreach {
-          case StoredIndexEntry(path, entry) ⇒
-            if (!path.exists) {
-              if (entry.isDirectory)
-                removeDirectory(path)
-              else
-                removeImage(path)
-            }
-        }
+      subTree.foreach {
+        case StoredIndexEntry(path, entry) if !path.exists ⇒
+          // Remove non-existing entry
+          if (entry.isDirectory) {
+            removeDirectory(path)
+          } else {
+            removeImage(path)
+          }
 
-        // Put images
-        for (image <- directory.subFiles if needIndexing(image)) {
-          putImage(image, readMetadata)
-        }
-
-        // Put directory entry
-        fileTree += asIndexKey(directory) → IndexEntry(true, time.toInstant)
+        case _ ⇒
+          // Pass
       }
+
+      // Put images
+      for (image <- directory.subFiles if needIndexing(image)) {
+        putImage(image, readMetadata)
+      }
+
+      // Put directory entry
+      fileTree += asIndexKey(directory) → IndexEntry(true, directory.lastModified.toInstant)
     }
 
     override def getDirectory(directory: Path): Option[DirectoryCursor] = {
