@@ -8,9 +8,16 @@ html(ng-app='imageBrowser')
         title ImageBrowser
         include _static_includes
 
-    body: .container#main-container(ng-controller='imageBrowserCtrl')
-        .row#directory-panel: .col-md-12
-            include index/directory_panel
+    body: div(ng-controller='imageBrowserCtrl')
+        +navbar('ImageBrowser')
+            +navbar-left
+                +navbar-tab('folders', 'Navigation')(active = true, icon = 'folder-open')
+                +navbar-tab('images', 'Images')(icon = 'picture', li_attributes = {'ng-show': 'images.length > 0'})
 
-        .row#gallery-panel(ng-show='images.length > 0'): .col-md-12
-            include index/gallery_panel
+        .container#main-container: .row: .col-md-12
+            +tab-content-container('navbar')
+                +tab-content('folders')(active = true)
+                    include index/folders
+
+                +tab-content('images')(attributes = {'ng-show': 'images.length > 0'})
+                    include index/images

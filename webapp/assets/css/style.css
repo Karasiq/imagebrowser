@@ -1,11 +1,6 @@
 #gallery {
     margin-right: auto;
     margin-left: auto;
-    width: 90%;
-}
-
-#gallery img {
-    max-width: 20%;
 }
 
 #main-container {
@@ -20,4 +15,13 @@
     #add-root-directory input[name='path'] {
         width: 500px;
     }
+}
+
+#main-container {
+    margin-top: 50px;
+}
+
+.glyphicon {
+    margin-left: 2px;
+    margin-right: 2px;
 }

@@ -29,7 +29,7 @@ object ImageBrowserJsonProtocol extends DefaultJsonProtocol {
       JsObject(
         "path" → JsString(obj.path.toString),
         "lastModified" → JsString(obj.lastModified.toString),
-        "subDirs" → obj.subDirs.toVector.map(_.path.toString).sorted.toJson,
+        "subDirs" → obj.subDirs.toVector.map(_.path.toString).toJson,
         "images" → obj.images.toVector.sortBy(_.lastModified).toJson
       )
     }

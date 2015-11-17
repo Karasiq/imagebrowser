@@ -1,12 +1,17 @@
 include common
 
 mixin glyphicon(name)
-    span(class='glyphicon glyphicon-#{name}')&attributes(attributes.attributes || {})
+    span(class='glyphicon glyphicon-#{name}')&attributes(attributes || {})
 
--var _formInputId = 0
--var _panelId = 0
--var _buttonId = 0
--var _tableId = 0
+mixin glyphicon-href(name, url)
+    a(href=url || '', class='glyphicon-href')&attributes(attributes || {})
+        +glyphicon(name)
+        block
+
+-var _formInputId = 0;
+-var _panelId = 0;
+-var _buttonId = 0;
+-var _tableId = 0;
 
 mixin button(id, caption, style)
     if id
@@ -21,6 +26,7 @@ mixin button(id, caption, style)
     button(id=id_, type='button', class='btn btn-#{style_} #{class_}')&attributes(attributes.attributes || {})= caption
 
 mixin panel(id)
+    // Bootstrap panel
     -style_ = attributes.style || 'default'
     if id
         -id_ = id
@@ -50,6 +56,7 @@ mixin panel(id)
                 =attributes.footer
 
 mixin table(id, ...columns)
+    // Bootstrap table
     -class_ = attributes.class || ''
     if id
         -id_ = id
@@ -68,7 +75,8 @@ mixin table(id, ...columns)
             block
 
 mixin form(id)
-    form(id=id, role='form', class=attributes.class)&attributes(attributes.attributes || {})
+    // Bootstrap form
+    form(id=id, role='form')&attributes(attributes || {})
         block
 
 mixin form-input(id, name, type)
@@ -108,17 +116,17 @@ mixin form-checkbox(id, name, label)
         -class_ = class_ + ' disabled'
         -attributes.attributes.disabled = true
 
-    div(class=class_)
+    div(class=class_, title=attributes.title || '')
         label
-            input(type='checkbox', name=name, id=id, value=attributes.value || '', title=attributes.title || '',)&attributes(attributes.attributes || {})
+            input(type='checkbox', name=name, id=id, value=attributes.value || '')&attributes(attributes.attributes || {})
             +nbsp
             =label
 
 mixin form-textarea(id, name, rows)
-    textarea.form-control(rows=rows, name=name)
+    textarea.form-control(rows=rows, name=name)&attributes(attributes || {})
 
 mixin form-select(id, name, ...items)
-    select.form-control(id=id, name=name)&attributes(attributes)
+    select.form-control(id=id, name=name)&attributes(attributes || {})
         each item in items
             option(value=item.value)= item.caption
 
@@ -126,3 +134,111 @@ mixin form-submit-button(caption, style)
     -style_ = style || 'default'
     -class_ = attributes.class || ''
     button(id=attributes.id, type='submit', class='btn btn-#{style_} #{class_}')= caption
+
+mixin infodlg(id, title)
+    // Boostrap modal information window
+    -title_ = title || 'Information'
+    div(id=id, class='modal fade'): .modal-dialog: .modal-content
+        .modal-header
+            |<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            h4.modal-title= title
+        .modal-body
+            block
+        .modal-footer
+            |<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+
+mixin dialog(id, title)
+    // Bootstrap modal dialog window
+    -title_ = title || 'Confirmation'
+    div(id=id, class='modal fade'): .modal-dialog: .modal-content
+        .modal-header
+            |<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            h4.modal-title= title
+        .modal-body
+            block
+        .modal-footer
+            |<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            button.btn.btn-primary(id=id+'-ok-button', data-dismiss='modal')&attributes(attributes.okbutton) Submit
+
+mixin tabs(id)
+    // Bootstrap tab list container
+    ul.nav.nav-tabs(id = id + '-tablist', role='tablist')
+        block
+
+mixin tab(id, title)
+    if attributes.active
+        -li_class = 'active'
+    else
+        -li_class = ''
+
+    li(class = li_class, role='presentation')&attributes(attributes.attributes || {})
+        a(href = 'javascript:void(0);', data-target='#' + id + '-tab', role='tab', data-toggle='tab')= title
+
+mixin tab-content-container(id)
+    // Bootstrap tab content container
+    .tab-content(id = id + '-tabcontent')&attributes(attributes || {})
+        block
+
+mixin tab-content(id)
+    if attributes.active
+        -fade_class = 'active fade in'
+    else
+        -fade_class = 'fade'
+
+    div(class = 'tab-pane ' + fade_class, id = id + '-tab', role = 'tabpanel')&attributes(attributes.attributes || {})
+        block
+
+
+mixin navbar(title)
+    // Bootstrap navigation bar
+    nav.navbar.navbar-default.navbar-fixed-top: .container
+        .navbar-header
+            button.navbar-toggle.collapsed(type='button', data-toggle='collapse', data-target='#navbar', aria-expanded='false', aria-controls='navbar')
+                span.sr-only Toggle navigation
+                span.icon-bar
+                span.icon-bar
+                span.icon-bar
+            a.navbar-brand(href='javascript:void(0);')= title
+
+        #navbar.navbar-collapse.collapse
+            block
+
+mixin navbar-left
+    // Left part
+    ul.nav.navbar-nav: block
+
+mixin navbar-right
+    // Right part
+    ul.nav.navbar-nav.navbar-right: block
+
+mixin navbar-tab(id, title)
+    if attributes.active
+        -li_class = 'active'
+    else
+        -li_class = ''
+
+    li(class = li_class)&attributes(attributes.li_attributes || {})
+        if attributes.icon
+            a(id = id + '-tab-control', href='javascript:void(0);', role='tab', data-toggle='tab', data-target='#' + id + '-tab')&attributes(attributes.attributes || {})
+                +glyphicon(attributes.icon)
+                +nbsp
+                =title
+        else
+            a(id = id + '-tab-control', href='javascript:void(0);', role='tab', data-toggle='tab', data-target='#' + id + '-tab')&attributes(attributes.attributes || {})= title
+
+mixin navbar-link(href, title)
+    if attributes.active
+        -li_class = 'active'
+    else
+        -li_class = ''
+
+    li(class = li_class)
+        if attributes.icon
+            a(href=href)&attributes(attributes.attributes || {})
+                +glyphicon(attributes.icon)
+                +nbsp
+                =title
+        else
+            a(href=href)&attributes(attributes.attributes || {})= title
+
+

@@ -1,0 +1,33 @@
+// Current directory hint
+small(ng-show='currentDirectory') {{currentDirectory}}
+
+// Search form
+#directory-search-form(title='Search directories')
+    .form-group: input.form-control(ng-model='directorySearch')
+
+#folders-pagination(style='text-align:center;')
+    dir-pagination-controls(pagination-id='directory')
+
++table('directory-list', 'Path')(class='table-hover table-condensed table-bordered')
+    tr(ng-show='isAtRoot()'): td
+        +form('add-root-directory')(class='form-inline', ng-submit = 'addRootDirectory()')
+            +form-submit-button('Add root directory')
+            +form-input('', 'path')(class='input-sm', attributes={'ng-model' : 'newRootDirectory.path', 'required' : true})
+            +form-checkbox('', 'read-metadata', 'Read metadata')(attributes = {'ng-model': 'newRootDirectory.readMetadata'})
+
+    // Root level button
+    tr(ng-show='!isAtRoot()'): td
+        a(ng-click='loadRootLevel();$event.preventDefault();', href='##') (back to root)
+
+    // Level up button
+    tr(ng-show='!isAtRoot()'): td
+        a(ng-click='loadUpperLevel();$event.preventDefault();', href='#?path={{getUpperLevel(currentDirectory)}}') (level up)
+
+    // Directory links
+    tr(dir-paginate="directory in directories | filter:directorySearch | itemsPerPage:18: 'directory'", pagination-id='directory', current-page='pagination.directories'): td
+        // Delete icon
+        a(href="", ng-if='isAtRoot()', ng-click='deleteRootDirectory(directory)')
+            +glyphicon('remove')
+
+        // Directory name
+        a(ng-click='setCurrentDirectory(directory);$event.preventDefault();', href='##{{directory}}') {{renderDirectoryLink(directory)}}

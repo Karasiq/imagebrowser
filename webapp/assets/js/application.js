@@ -115,6 +115,11 @@
                 $scope.directories = data.subDirs;
                 $scope.images = data.images;
                 document.title = getPageTitle(data.path);
+                if (data.images.length === 0) {
+                    $('#folders-tab-control').tab('show');
+                } else if (data.subDirs.length === 0) {
+                    $('#images-tab-control').tab('show');
+                }
             }
 
             function showRoot(data) {
@@ -146,7 +151,11 @@
 
         $scope.setCurrentDirectory = function (dir) {
             if ($location.search().path !== dir) {
-                $location.search("path", dir);
+                if (dir === undefined || dir.length === 0) {
+                    $location.search("path", undefined);
+                } else {
+                    $location.search("path", dir);
+                }
                 $scope.pagination.directories = 1;
                 $scope.pagination.images = 1;
             }
@@ -190,6 +199,7 @@
             var dir = params.path;
             if (dir !== $scope.currentDirectory) {
                 $log.debug("Changing directory to " + dir);
+                $('#folders-tab-control').tab('show'); // Switch to folders tab
                 $scope.loadDirectory(dir);
             }
 
@@ -201,9 +211,13 @@
             $scope.pagination.images = readPage(params.images_page);
         };
 
+        function getFileName(image) {
+            return image.slice($scope.currentDirectory.length + 1);
+        }
+
         // Gallery functions
         $scope.imageTitle = function (image) {
-            var title = "Last modified: " + image.lastModified;
+            var title = getFileName(image.path) + "\nLast modified: " + image.lastModified;
             if (image.iptc) {
                 title += "\nIPTC: " + JSON.stringify(image.iptc);
             }
@@ -216,6 +230,61 @@
 
         $scope.imageThumbnail = function (image) {
             return "/thumbnail?path=" + encodeURIComponent(image);
+        };
+
+        $scope.showImage = function (image) {
+            function screenSize() {
+                var w, h;
+                w = (window.innerWidth
+                    ? window.innerWidth
+                    : (document.documentElement.clientWidth
+                    ? document.documentElement.clientWidth
+                    : document.body.offsetWidth));
+                h = (window.innerHeight
+                    ? window.innerHeight
+                    : (document.documentElement.clientHeight
+                    ? document.documentElement.clientHeight
+                    : document.body.offsetHeight));
+                return {width: w, height: h};
+            }
+
+            function showBig(img) {
+                var width = screenSize().width;
+                if (img.width > width) {
+                    img.width = width - 60;
+                }
+
+                var popup = document.createElement('div');
+                popup.style.position = 'fixed';
+                popup.style.height = '100%';
+                popup.style.width = '100%';
+                popup.style.left = '0px';
+                popup.style.top = '0px';
+                popup.style.zIndex = '999';
+                popup.style.overflow = 'auto';
+                popup.style.textAlign = 'center';
+                popup.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                popup.style.cursor = 'pointer';
+                document.body.style.overflow = 'hidden';
+
+                popup.onmousedown = function () {
+                    return false;
+                };
+                popup.onclick = function () {
+                    document.body.style.overflow = 'auto';
+                    this.parentNode.removeChild(this);
+                };
+
+                popup.appendChild(img);
+
+                document.body.appendChild(popup);
+            }
+
+            var im = document.createElement('img');
+            im.src = $scope.imageFull(image);
+            im.onload = function () {
+                showBig(this);
+            };
         };
 
         // Events
