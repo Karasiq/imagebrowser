@@ -28,8 +28,8 @@ trait DirectoryManagerProvider { self: IndexRegistryProvider with FileWatcherSer
     }
 
     def removeDirectory(dir: String): Unit = {
+      fileWatcherService ! UnregisterFile(dir, true)
       indexRegistry.removeDirectory(Paths.get(dir))
-      fileWatcherService ! UnregisterFile(dir)
     }
   }
 
