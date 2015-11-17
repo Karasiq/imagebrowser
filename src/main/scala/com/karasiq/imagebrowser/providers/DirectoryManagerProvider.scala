@@ -23,8 +23,8 @@ trait DirectoryManagerProvider { self: IndexRegistryProvider with FileWatcherSer
     }
 
     def addDirectory(dir: String, readMetadata: Boolean): Unit = {
-      indexRegistry.scanDirectory(Paths.get(dir), readMetadata)
       fileWatcherService ! RegisterFile(dir, true)
+      indexRegistry.scanDirectory(Paths.get(dir), readMetadata)
     }
 
     def removeDirectory(dir: String): Unit = {
