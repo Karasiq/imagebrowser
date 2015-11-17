@@ -26,7 +26,7 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
     // File visitor object
     private final class DirectoryScanner(readMetadata: Boolean) extends SimpleFileVisitor[Path] {
       override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = {
-        if (needRescanDirectory(dir)) {
+        if (!getDirectory(dir).exists(_.lastModified.toEpochMilli == attrs.lastModifiedTime().toMillis)) {
           putDirectory(dir, readMetadata)
         }
         FileVisitResult.CONTINUE
@@ -75,11 +75,6 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
         case StoredIndexEntry(path, entry) if entry.isDirectory ⇒
           new WrappedDirectoryEntry(path, entry)
       }
-    }
-
-    private def needRescanDirectory(dir: Path): Boolean = {
-      val entry = this.getDirectory(dir)
-      !entry.exists(_.lastModified.toEpochMilli == dir.lastModified.toMillis)
     }
 
     private def needRescanImage(image: Path): Boolean = {
