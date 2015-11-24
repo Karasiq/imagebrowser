@@ -44,7 +44,7 @@ val backendDeps = {
   )
 }
 
-val backendSettings = Seq(
+lazy val backendSettings = Seq(
   name := "imagebrowser",
   classpathTypes += "maven-plugin",
   libraryDependencies ++= backendDeps,
@@ -54,7 +54,5 @@ val backendSettings = Seq(
 )
 
 lazy val backend = Project("imagebrowser", file("."))
-  .settings(commonSettings)
-  .settings(backendSettings)
-
-enablePlugins(JavaAppPackaging)
+  .enablePlugins(GulpPlugin, JavaAppPackaging)
+  .settings(commonSettings, backendSettings)
