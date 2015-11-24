@@ -9,7 +9,7 @@ var gulp = require('gulp'),
     connect = require('gulp-connect');
 
 
-var outputDir = '../src/main/resources/webstatic/';
+var outputDir = './out/';
 
 gulp.task('copy', ['bower'], function () {
     gulp.src('./assets/favicon.ico')

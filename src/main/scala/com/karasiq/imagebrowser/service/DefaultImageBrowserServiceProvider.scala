@@ -22,7 +22,7 @@ import spray.routing.{Directive1, HttpService}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.{postfixOps, reflectiveCalls}
-import scala.util.{Failure, Try, Success}
+import scala.util.{Try, Success}
 
 trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { self: ActorSystemProvider with IndexRegistryProvider with DirectoryManagerProvider ⇒
   /**
