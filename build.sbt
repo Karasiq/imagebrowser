@@ -1,5 +1,3 @@
-lazy val compileWebapp = taskKey[File]("Compiles web application")
-
 val commonSettings = Seq(
   organization := "com.github.karasiq",
   scalaVersion := "2.11.7",
