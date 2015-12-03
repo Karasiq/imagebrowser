@@ -2,8 +2,8 @@ val commonSettings = Seq(
   organization := "com.github.karasiq",
   scalaVersion := "2.11.7",
   resolvers += Resolver.sonatypeRepo("snapshots"),
-  isSnapshot := true,
-  version := "1.0-SNAPSHOT",
+  isSnapshot := false,
+  version := "1.0.0-M1",
   scalacOptions ++= Seq("-target:jvm-1.8")
 )
 
