@@ -233,6 +233,15 @@
         };
 
         $scope.showImage = function (image) {
+            function extOf(image) {
+              var p = image.split(/\./);
+              if (p.length > 0) {
+                return p[p.length - 1].toLowerCase();
+              } else {
+                return "";
+              }
+            }
+          
             function screenSize() {
                 var w, h;
                 w = (window.innerWidth
@@ -255,6 +264,7 @@
                 }
 
                 var popup = document.createElement('div');
+                popup.style.marginTop = '50px';
                 popup.style.position = 'fixed';
                 popup.style.height = '100%';
                 popup.style.width = '100%';
@@ -280,11 +290,24 @@
                 document.body.appendChild(popup);
             }
 
-            var im = document.createElement('img');
-            im.src = $scope.imageFull(image);
-            im.onload = function () {
-                showBig(this);
-            };
+            switch (extOf(image)) {
+              case "jpg":
+              case "jpeg":
+              case "bmp":
+              case "gif":
+              case "png":
+                // Show in current page
+                var im = document.createElement('img');
+                im.src = $scope.imageFull(image);
+                im.onload = function () {
+                    showBig(this);
+                };
+                break;
+                
+              default:
+                // Open in new tab
+                window.open($scope.imageFull(image), '_blank');
+            }
         };
 
         // Events
