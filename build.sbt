@@ -2,8 +2,8 @@ val commonSettings = Seq(
   organization := "com.github.karasiq",
   scalaVersion := "2.11.7",
   resolvers += Resolver.sonatypeRepo("snapshots"),
-  isSnapshot := false,
-  version := "1.0.0-M1",
+  isSnapshot := true,
+  version := "1.0.0-M2-SNAPSHOT",
   scalacOptions ++= Seq("-target:jvm-1.8")
 )
 
@@ -29,6 +29,7 @@ val backendDeps = {
   val sprayV = "1.3.3"
   javaCvLibs(javaCvVersion, "opencv" → "3.0.0", "ffmpeg" → "2.8.1") ++ Seq(
     "com.github.karasiq" %% "akka-commons" % "1.0",
+    "com.github.karasiq" %% "commons" % "1.1-SNAPSHOT",
     "com.github.karasiq" %% "mapdbutils" % "1.1-SNAPSHOT",
     "com.typesafe.akka" %% "akka-actor" % akkaV,
     "io.spray" %% "spray-can" % sprayV,

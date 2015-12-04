@@ -149,21 +149,25 @@ trait MapDbIndexRegistryProvider extends IndexRegistryProvider { self: IndexRegi
       val subTree = fileTree.underlying()
           .subMap(Array(asString(directory)), Array(asString(directory), null))
 
-      subTree.foreach {
-        case StoredIndexEntry(path, entry) if !path.exists ⇒
-          // Remove non-existing entry
-          if (entry.isDirectory) {
-            removeDirectory(path)
-          } else {
-            removeImage(path)
+      val directoryListing = directory.subFilesAndDirs.toStream
+      val directoryNames = directoryListing.map(_.getFileName.toString).toSet
+      subTree.keysIterator.foreach {
+        case key ⇒
+          val fileName = key(0).asInstanceOf[String]
+          if (!directoryNames.contains(fileName)) {
+            // Remove non-existing entry
+            val entry = fileTree.get(key)
+            val path = directory.resolve(fileName)
+            if (entry.exists(_.isDirectory)) {
+              removeDirectory(path)
+            } else {
+              removeImage(path)
+            }
           }
-
-        case _ ⇒
-          // Pass
       }
 
       // Put images
-      for (image <- directory.subFiles if needIndexing(image)) {
+      for (image <- directoryListing.filter(_.isRegularFile) if needIndexing(image)) {
         putImage(image, readMetadata)
       }
 

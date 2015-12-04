@@ -13,6 +13,9 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import java.nio.file.FileSystemException
+
+import scala.util.control
 
 final case class IndexRegistryChange(path: String)
 
@@ -37,7 +40,9 @@ trait DefaultFileWatcherServiceProvider extends FileWatcherServiceProvider { sel
     private val rescanTask = actorSystem.scheduler.schedule(rescanTaskInterval, rescanTaskInterval) {
       rescanQueue.dequeueAll(_ ⇒ true).foreach { dir ⇒
         log.debug("Rescan started: {}", dir)
-        indexRegistry.putDirectory(dir)
+        control.Exception.ignoring(classOf[FileSystemException]) {
+          indexRegistry.putDirectory(dir)
+        }
         actorSystem.eventStream.publish(IndexRegistryChange(dir.toString))
       }
     }
