@@ -28,16 +28,16 @@ val backendDeps = {
   val akkaV = "2.4.0"
   val sprayV = "1.3.3"
   javaCvLibs(javaCvVersion, "opencv" → "3.0.0", "ffmpeg" → "2.8.1") ++ Seq(
-    "com.github.karasiq" %% "akka-commons" % "1.0",
-    "com.github.karasiq" %% "commons" % "1.1-SNAPSHOT",
-    "com.github.karasiq" %% "mapdbutils" % "1.1-SNAPSHOT",
+    "com.github.karasiq" %% "commons-akka" % "1.0.3",
+    "com.github.karasiq" %% "commons" % "1.0.3",
+    "com.github.karasiq" %% "mapdbutils" % "1.1.1",
     "com.typesafe.akka" %% "akka-actor" % akkaV,
     "io.spray" %% "spray-can" % sprayV,
     "io.spray" %% "spray-routing-shapeless2" % sprayV,
     "io.spray" %% "spray-caching" % sprayV,
     "io.spray" %% "spray-testkit" % sprayV % "test",
     "io.spray" %% "spray-json" % "1.3.2",
-    "org.mapdb" % "mapdb" % "2.0-beta8",
+    "org.mapdb" % "mapdb" % "2.0-beta12",
     "com.drewnoakes" % "metadata-extractor" % "2.8.1",
     "commons-io" % "commons-io" % "2.4",
     "org.scalatest" %% "scalatest" % "2.2.1" % "test",

@@ -16,10 +16,7 @@ private[mapdb] object Serializers {
   /**
    * File tree key serializer
    */
-  val INDEX_KEY = new ArrayKeySerializer(
-    Array(Fun.COMPARATOR, Fun.COMPARATOR),
-    Array(Serializer.STRING_XXHASH, Serializer.STRING_XXHASH)
-  )
+  val INDEX_KEY = new ArrayKeySerializer(Serializer.STRING_XXHASH, Serializer.STRING_XXHASH)
 
   /**
    * File tree value serializer
