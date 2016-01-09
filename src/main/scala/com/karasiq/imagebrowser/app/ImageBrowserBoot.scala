@@ -9,6 +9,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.IOUtils
 import spray.can.Http
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -31,10 +32,12 @@ object ImageBrowserBoot extends App with ImageBrowserActorSystem.Provider with I
 
   def shutdown(): Unit = {
     log.info("Shutting down ImageBrowser")
-    IOUtils.closeQuietly(indexRegistryDb)
-    IOUtils.closeQuietly(thumbnailsCacheDb)
-    actorSystem.shutdown()
-    actorSystem.awaitTermination(2 minutes)
+
+    actorSystem.registerOnTermination {
+      IOUtils.closeQuietly(indexRegistryDb)
+      IOUtils.closeQuietly(thumbnailsCacheDb)
+    }
+    Await.result(actorSystem.terminate(), 3 minutes)
   }
 
   // Schedule shutdown

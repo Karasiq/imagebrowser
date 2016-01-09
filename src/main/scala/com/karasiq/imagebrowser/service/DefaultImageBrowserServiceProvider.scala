@@ -1,6 +1,7 @@
 package com.karasiq.imagebrowser.service
 
 import java.nio.file.Paths
+import java.time.Instant
 import java.util.concurrent.Executors
 
 import akka.actor._
@@ -12,16 +13,19 @@ import com.karasiq.imagebrowser.index.DirectoryCursor
 import com.karasiq.imagebrowser.providers.{ActorSystemProvider, DirectoryManagerProvider, ImageBrowserServiceProvider, IndexRegistryProvider}
 import com.typesafe.config.ConfigFactory
 import spray.caching._
-import spray.http.{HttpData, MediaTypes, StatusCodes}
+import spray.http.CacheDirectives.`max-age`
+import spray.http.HttpHeaders.{`Cache-Control`, `Last-Modified`}
+import spray.http.{CacheDirectives, HttpData, MediaTypes, StatusCodes}
 import spray.json._
 import spray.httpx.SprayJsonSupport._
 import ImageBrowserJsonProtocol._
 import spray.routing
+import spray.routing.directives.CachingDirectives
 import spray.routing.{Directive1, HttpService}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.{postfixOps, reflectiveCalls}
+import scala.language.{implicitConversions, postfixOps, reflectiveCalls}
 import scala.util.{Try, Success}
 
 trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { self: ActorSystemProvider with IndexRegistryProvider with DirectoryManagerProvider ⇒
@@ -36,7 +40,7 @@ trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { s
 
     implicit def executionContext: ExecutionContext
 
-    protected val thumbnailContext = ExecutionContext.fromExecutorService(Executors.newWorkStealingPool(10))
+    protected val thumbnailContext = ExecutionContext.fromExecutorService(Executors.newWorkStealingPool(48))
 
     private lazy val dirManagerActor = actorRefFactory.actorOf(Props(new DirectoryManagerActor), "dirManager")
 
@@ -78,10 +82,16 @@ trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { s
       }
     }
 
+    private def imgCacheControl = {
+      `Cache-Control`(CacheDirectives.public, CacheDirectives.`max-age`(60 * 60 * 24))
+    }
+
     private def getImage(image: String): routing.Route = {
-      indexRegistry.getImage(Paths.get(image)).map(_.path) match {
+      indexRegistry.getImage(Paths.get(image)) match {
         case Some(img) ⇒
-          getFromFile(img.toFile)
+          (respondWithHeader(imgCacheControl) & respondWithLastModifiedHeader(img.lastModified.toEpochMilli)) {
+            getFromFile(img.path.toFile)
+          }
 
         case _ ⇒
           complete(StatusCodes.NotFound, "No such image")
@@ -93,7 +103,7 @@ trait DefaultImageBrowserServiceProvider extends ImageBrowserServiceProvider { s
         case Some(img) ⇒
           Try(img.thumbnail) match {
             case Success(thumb) if thumb.ne(null) && thumb.length > 0 ⇒
-              respondWithMediaType(MediaTypes.`image/jpeg`) {
+              (respondWithMediaType(MediaTypes.`image/jpeg`) & respondWithHeader(imgCacheControl) & respondWithLastModifiedHeader(img.lastModified.toEpochMilli)) {
                 complete(HttpData(thumb))
               }
 
