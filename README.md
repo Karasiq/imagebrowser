@@ -7,7 +7,7 @@ ImageBrowser is web-based images and video organizer, optimized for fast search 
 sbt run
 ```
 
-* Download and extract pre-compiled package, then execute launcher script
+* Download and extract [the pre-compiled package](https://github.com/Karasiq/imagebrowser/releases/download/v1.0.0/imagebrowser-1.0.0.zip), then execute launcher script
 ```
 # Linux
 > ./bin/imagebrowser
