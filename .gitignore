@@ -4,3 +4,4 @@ webapp/out/
 webapp/node_modules/
 webapp/assets/bower/
 webapp/bower_components/
+*.bat
