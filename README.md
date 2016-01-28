@@ -1,4 +1,4 @@
-# ImageBrowser
+# ImageBrowser [![Dependencies](https://app.updateimpact.com/badge/692686982173822976/imagebrowser.svg?config=compile)](https://app.updateimpact.com/latest/692686982173822976/imagebrowser)
 ImageBrowser is web-based images and video organizer, optimized for fast search and navigation in large directory trees
 
 # How to run
